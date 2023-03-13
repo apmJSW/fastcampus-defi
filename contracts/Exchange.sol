@@ -24,6 +24,12 @@ contract Exchange {
         //transfer token out
         IERC20(token).transfer(msg.sender, amountOut);
     }
+
+    function getPrice(uint256 inputReserve, uint256 outputReserve) public pure returns (uint256) {
+      uint256 numerator = inputReserve;
+      uint256 denominator = outputReserve;
+      return numerator / denominator;
+    }
     
     function getOutputAmount(uint256 inputAmount, uint256 inputReserve, uint256 outputReserve) public pure returns (uint256) {
         uint256 numerator = (inputAmount * outputReserve);
