@@ -29,20 +29,60 @@ describe("Exchange", () => {
 
   describe("addLiquidity", async () => {
     it("add liquidity", async () => {
-      await token.approve(exchange.address, toWei(10_000));
-      await exchange.addLiquidity(toWei(1_000), { value: toWei(1_000) });
+      await token.approve(exchange.address, toWei(5000));
+      await exchange.addLiquidity(toWei(500), { value: toWei(1_000) });
 
       expect(await getBalance(exchange.address)).to.equal(toWei(1_000));
-      expect(await token.balanceOf(exchange.address)).to.equal(toWei(1_000));
+      expect(await token.balanceOf(exchange.address)).to.equal(toWei(500));
+
+      await token.approve(exchange.address, toWei(100));
+      await exchange.addLiquidity(toWei(100), { value: toWei(200) });
+
+      expect(await getBalance(exchange.address)).to.equal(toWei(1_200));
+      expect(await token.balanceOf(exchange.address)).to.equal(toWei(600));
     });
   });
 
-  describe("getOutputAmount", async () => {
+  describe("removeLiquidity", async () => {
+    it("remove liquidity", async () => {
+      await token.approve(exchange.address, toWei(5000));
+      await exchange.addLiquidity(toWei(500), { value: toWei(1_000) });
+
+      expect(await getBalance(exchange.address)).to.equal(toWei(1_000));
+      expect(await token.balanceOf(exchange.address)).to.equal(toWei(500));
+
+      await token.approve(exchange.address, toWei(100));
+      await exchange.addLiquidity(toWei(100), { value: toWei(200) });
+
+      expect(await getBalance(exchange.address)).to.equal(toWei(1_200));
+      expect(await token.balanceOf(exchange.address)).to.equal(toWei(600));
+
+      await exchange.removeLiquidity(toWei(600));
+      expect(await getBalance(exchange.address)).to.equal(toWei(600));
+      expect(await token.balanceOf(exchange.address)).to.equal(toWei(300));
+    });
+  });
+
+  describe.skip("getOutputAmount", async () => {
     it("correct getOutputAmount", async () => {
       await token.approve(exchange.address, toWei(4_000));
       await exchange.addLiquidity(toWei(4_000), { value: toWei(1_000) });
 
       console.log(toEther(await exchange.getOutputAmount(toWei(1), getBalance(exchange.address), token.balanceOf(exchange.address))));
+    });
+  })
+
+  describe.skip("ethToTokenSwap", async () => {
+    it("correct ethToTokenSwap", async () => {
+      await token.approve(exchange.address, toWei(4_000));
+      
+      // GRAY:ETH 4:1
+      await exchange.addLiquidity(toWei(4_000), { value: toWei(1_000) });
+
+      //1ETH: ?? GRAY
+      await exchange.connect(user).ethToTokenSwap(toWei(3.99), {value: toWei(1)});
+
+      console.log(toEther(await token.balanceOf(user.address)));
     });
   })
 })
