@@ -35,8 +35,8 @@ describe("Factory", () => {
             // callStatic으로 호출하면 view로 함수 호출. 결과만 사용하고 내부적으로 실행된 값들 저장x. 가스비 안 듦.
             const exchangeAddress = await factory.callStatic.createExchange(token.address);
             console.log(exchangeAddress);
-            console.log(await factory.getExchange(token.address));
-            await factory.createExchange(token.address);
+            console.log(await factory.getExchange(token.address));  
+            // 000000000000000 <- callStatic으로 최초에 호출했기 때문에 컨트랙트에 값이 저장되지 않았음            await factory.createExchange(token.address);
             expect(await factory.getExchange(token.address)).eq(exchangeAddress);
         });
     });
