@@ -5,7 +5,9 @@ import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import "./interfaces/IFactory.sol";
+import "./interfaces/IExchange.sol";
 
 contract Exchange is ERC20 {
     IERC20 token;
@@ -50,13 +52,22 @@ contract Exchange is ERC20 {
 
   // ETH -> ERC20
   function ethToTokenSwap(uint256 _minTokens) public payable {
+    ethToToken(_minTokens, msg.sender);
+  }
+  
+  // ETH -> ERC20
+  function ethToTokenTransfer(uint256 _minTokens, address _recipient) public payable {
+    ethToToken(_minTokens, _recipient);
+  }
+
+  function ethToToken(uint _minTokens, address _recipient) private {
     // calculate amount out (zero fee)
     uint256 outputAmount = getOutputAmountWithFee(msg.value, address(this).balance - msg.value, token.balanceOf(address(this)));
 
     require(outputAmount >= _minTokens, "insufficient outputAmount");
 
     //transfer token out
-    token.transfer(msg.sender, outputAmount);
+    token.transfer(_recipient, outputAmount);
   }
 
   // ERC20 -> ETH
@@ -69,6 +80,20 @@ contract Exchange is ERC20 {
     //transfer token out
     token.transferFrom(msg.sender, address(this), _tokenSold);
     payable(msg.sender).transfer(outputAmount);
+  }
+    // ERC20 -> ERC20
+  function tokenToTokenSwap(uint256 _tokenSold, uint256 _minTokenBought, uint256 _minEthBought, address _tokenAddress) public payable {
+    address toTokenExchangeAddress = factory.getExchange(_tokenAddress);
+
+    // calculate amount out (zero fee)
+    uint256 ethOutputAmount = getOutputAmountWithFee(_tokenSold, token.balanceOf(address(this)), address(this).balance );
+
+    require(ethOutputAmount >= _minEthBought, "insufficient outputAmount");
+
+    //transfer token out
+    token.transferFrom(msg.sender, address(this), _tokenSold);
+
+    IExchange(toTokenExchangeAddress).ethToTokenTransfer{value: ethOutputAmount}(_minTokenBought, msg.sender);
   }
 
   function getPrice(uint256 inputReserve, uint256 outputReserve) public pure returns (uint256) {
