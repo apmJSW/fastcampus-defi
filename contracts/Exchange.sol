@@ -13,6 +13,11 @@ contract Exchange is ERC20 {
     IERC20 token;
     IFactory factory;
 
+    event TokenPurchase(address indexed buyer, uint indexed eth_sold, uint indexed token_bought);
+    event EthPurchase(address indexed buyer, uint indexed token_sold, uint indexed eth_bought);
+    event AddLiquidity(address indexed provider, uint indexed eth_amount, uint indexed token_amount);
+    event RemoveLiquidity(address indexed provider, uint indexed eth_amount, uint indexed token_amount);
+
   constructor (address _token) ERC20("Gray uniswap V2", "GUNI-V2") {
     token = IERC20(_token);
     factory = IFactory(msg.sender);
@@ -40,6 +45,7 @@ contract Exchange is ERC20 {
   }
 
   function removeLiquidity(uint256 _lpTokenAmount) public {
+    require(_lpTokenAmount > 0);
     uint256 totalLiquidity = totalSupply();
     uint256 ethAmount = address(this).balance * _lpTokenAmount / totalLiquidity;
     uint256 tokenAmount = token.balanceOf(address(this)) * _lpTokenAmount / totalLiquidity;
@@ -57,6 +63,7 @@ contract Exchange is ERC20 {
   
   // ETH -> ERC20
   function ethToTokenTransfer(uint256 _minTokens, address _recipient) public payable {
+    require(_recipient != address(0));
     ethToToken(_minTokens, _recipient);
   }
 
@@ -65,6 +72,8 @@ contract Exchange is ERC20 {
     uint256 outputAmount = getOutputAmountWithFee(msg.value, address(this).balance - msg.value, token.balanceOf(address(this)));
 
     require(outputAmount >= _minTokens, "insufficient outputAmount");
+
+    emit TokenPurchase(_recipient, msg.value, outputAmount);
 
     //transfer token out
     token.transfer(_recipient, outputAmount);
